@@ -92,6 +92,6 @@ public class BackpackData
 class Timeout
 {
     public static int sleepTime = 120000;
-    public static int workSleepTime = 180000;
+    public static int workSleepTime = 600000;
     public static int fishingSleepTime = 60000;
 }

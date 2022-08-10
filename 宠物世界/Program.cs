@@ -3,14 +3,17 @@ using ConfigManage;
 using IlyfairyLib.GoCqHttpSdk;
 using IlyfairyLib.GoCqHttpSdk.Api;
 using IlyfairyLib.GoCqHttpSdk.Models.Chunks;
+using System.Text.RegularExpressions;
 
 try
 {
     Session session = new("ws://127.0.0.1:6700", "http://127.0.0.1:5700");
-    //const int groupId = 522126928;
-    const int groupId = 295322097;
+    const int groupId = 522126928;
+    //const int groupId = 295322097;
     const uint master = 3251242073;
-    const uint botQQ = 3409297243;
+    const string botName = "千璃AwA喵";
+    const uint gameBotQQ = 3409297243;
+    //const uint gameBotQQ = 2794446833;
 
 #pragma warning disable CS1998 // 异步方法缺少 "await" 运算符，将以同步方式运行
 
@@ -45,11 +48,25 @@ try
     {
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine("Robot连接成功");
+
+        if (config.Setting.AutoWork)
+            WorkTask.AutoWork(session, config);
+
+        if (config.Setting.AutoExplore)
+            WorkTask.AutoExplore(session, config);
+
+        if (config.Setting.AutoTrain)
+            WorkTask.AutoTrain(session, config);
+
+        if (config.Setting.AutoFishing)
+            WorkTask.AutoFishing(session, config);
+
         return true;
     });
 
     //程序退出事件
-    AppDomain.CurrentDomain.ProcessExit += (sender, e) => {
+    AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
+    {
         DiaLog.Log("程序退出 保存配置文件");
         Config.SaveConfig(config);
     };
@@ -59,9 +76,49 @@ try
     {
         if (v.GroupId == groupId)
         {
-            if (v.QQ == botQQ)
+            if (v.QQ == gameBotQQ)
             {
+                var message = v.Message.Text;
+                var name = Regex.Match(message, @"@(?<at>\S+)").Groups["at"].Value;
+                var moodStr = Regex.Match(message, @"心情减少.+?(?<num>-?\d+)").Groups["num"].Value;
+                var energyStr = Regex.Match(message, @"((减少|消耗)精力)|(精力恢复).+?(?<num>-?\d+)").Groups["num"].Value;
+                var experienceStr = Regex.Match(message, @"(经验减少|增加经验).+?(?<num>-?\d+)").Groups["num"].Value;
+                var gradeStr = Regex.Match(message, @"等级提升.+?(?<num>-?\d+)").Groups["num"].Value;
+                var moneyStr = Regex.Match(message, @"获得积分.+?(?<num>-?\d+)").Groups["num"].Value;
 
+                if (name != string.Empty && name == botName)
+                {
+                    if (message.IndexOf("心情不好了") > 0)
+                    {
+                        config.PetData.Mood -= 10;
+                        DiaLog.Log($"宠物心情 -10 ({config.PetData.Mood})");
+                    }
+                    if (moodStr != string.Empty)
+                    {
+                        var mood = int.Parse(moodStr);
+                        config.PetData.Mood += mood;
+                    }
+                    if (energyStr != string.Empty)
+                    {
+                        var energy = int.Parse(energyStr);
+                        config.PetData.Energy += energy;
+                    }
+                    if (experienceStr != string.Empty)
+                    {
+                        var experience = int.Parse(experienceStr);
+                        config.PetData.Experience += experience;
+                    }
+                    if (gradeStr != string.Empty)
+                    {
+                        var grade = int.Parse(gradeStr);
+                        config.PetData.Grade += grade;
+                    }
+                    if (moneyStr != string.Empty)
+                    {
+                        var money = long.Parse(moneyStr);
+                        config.AccountData.Money += money;
+                    }
+                }
             }
             else if (v.QQ == master)
             {
@@ -78,40 +135,7 @@ try
                             else
                             {
                                 config.Setting.AutoWork = true;
-                                Thread autoWork = new(async () => {
-                                    DateTime startTime = DateTime.Now;
-                                    while (config.Setting.AutoWork)
-                                    {
-                                        if (config.PetData.Energy >= 10)
-                                        {
-                                            await session.SendGroupMessageAsync(groupId, "打工");
-                                            config.PetData.Energy -= 10;
-                                            Thread.Sleep(ConfigDatas.Timeout.sleepTime);
-                                        }
-                                        else
-                                        {
-                                            if (config.AccountData.Money >= 1988)
-                                            {
-                                                DiaLog.Log("精力不足，正在补充");
-                                                await session.SendGroupMessageAsync(groupId, "购买中精力药*1");
-                                                await session.SendGroupMessageAsync(groupId, "使用中精力药*1");
-                                                config.AccountData.Money -= 1988;
-                                                config.PetData.Energy += 10;
-                                            }
-                                            else
-                                            {
-                                                await session.SendGroupMessageAsync(groupId, "精力不足，无法购买中精力药补充精力打工，休息30分钟");
-                                                DiaLog.Log("精力不足，无法购买中精力药补充精力打工，休息30分钟");
-                                                Thread.Sleep(ConfigDatas.Timeout.workSleepTime);
-                                            }
-                                        }
-                                    }
-                                    await session.SendGroupMessageAsync(groupId, "自动打工已关闭");
-                                    DiaLog.Log($"自动打工线程结束 线程开始时间: [{startTime}]");
-                                });
-                                autoWork.Start();
-                                await session.SendGroupMessageAsync(groupId, "自动打工已开启");
-                                DiaLog.Log("自动打工已开启");
+                                WorkTask.AutoWork(session, config);
                             }
                         }
                         catch (Exception ex)
@@ -130,49 +154,7 @@ try
                             else
                             {
                                 config.Setting.AutoExplore = true;
-                                Thread autoExplore = new(async () => {
-                                    DateTime startTime = DateTime.Now;
-                                    while (config.Setting.AutoExplore)
-                                    {
-                                        if (config.PetData.Energy < 10)
-                                        {
-                                            if (config.AccountData.Money >= 1988)
-                                            {
-                                                DiaLog.Log("精力不足，正在补充");
-                                                await session.SendGroupMessageAsync(groupId, "购买中精力药");
-                                                await session.SendGroupMessageAsync(groupId, "使用中精力药");
-                                                config.AccountData.Money -= 1988;
-                                                config.PetData.Energy += 10;
-                                            }
-                                            else
-                                            {
-                                                await session.SendGroupMessageAsync(groupId, "精力不足，无法购买中精力药补充精力探险，休息30分钟");
-                                                DiaLog.Log("精力不足，无法购买中精力药补充精力探险，休息30分钟");
-                                                Thread.Sleep(ConfigDatas.Timeout.workSleepTime);
-                                            }
-                                        }
-
-                                        if (config.PetData.Mood >= 10)
-                                        {
-                                            await session.SendGroupMessageAsync(groupId, "探险");
-                                            config.PetData.Energy -= 10;
-                                            Thread.Sleep(ConfigDatas.Timeout.sleepTime);
-                                        }
-                                        else
-                                        {
-                                            DiaLog.Log("心情不足，正在补充");
-                                            await session.SendGroupMessageAsync(groupId, "玩耍");
-                                            config.PetData.Mood += 10;
-                                            config.PetData.Energy -= 10;
-                                            Thread.Sleep(ConfigDatas.Timeout.sleepTime);
-                                        }
-                                    }
-                                    await session.SendGroupMessageAsync(groupId, "自动探险已关闭");
-                                    DiaLog.Log($"自动探险线程结束 线程开始时间: [{startTime}]");
-                                });
-                                autoExplore.Start();
-                                await session.SendGroupMessageAsync(groupId, "自动探险已开启");
-                                DiaLog.Log("自动探险已开启");
+                                WorkTask.AutoExplore(session, config);
                             }
                         }
                         catch (Exception ex)
@@ -191,40 +173,7 @@ try
                             else
                             {
                                 config.Setting.AutoTrain = true;
-                                Thread autoTrain = new(async () => {
-                                    DateTime startTime = DateTime.Now;
-                                    while (config.Setting.AutoTrain)
-                                    {
-                                        if (config.PetData.Energy >= 10)
-                                        {
-                                            await session.SendGroupMessageAsync(groupId, "修炼");
-                                            config.PetData.Energy -= 10;
-                                            Thread.Sleep(ConfigDatas.Timeout.sleepTime);
-                                        }
-                                        else
-                                        {
-                                            if (config.AccountData.Money >= 1988)
-                                            {
-                                                DiaLog.Log("精力不足，正在补充");
-                                                await session.SendGroupMessageAsync(groupId, "购买中精力药*1");
-                                                await session.SendGroupMessageAsync(groupId, "使用中精力药*1");
-                                                config.AccountData.Money -= 1988;
-                                                config.PetData.Energy += 10;
-                                            }
-                                            else
-                                            {
-                                                await session.SendGroupMessageAsync(groupId, "精力不足，无法购买中精力药补充精力修炼，休息30分钟");
-                                                DiaLog.Log("精力不足，无法购买中精力药补充精力修炼，休息30分钟");
-                                                Thread.Sleep(ConfigDatas.Timeout.workSleepTime);
-                                            }
-                                        }
-                                    }
-                                    await session.SendGroupMessageAsync(groupId, "自动修炼已关闭");
-                                    DiaLog.Log($"自动修炼线程结束 线程开始时间: [{startTime}]");
-                                });
-                                autoTrain.Start();
-                                await session.SendGroupMessageAsync(groupId, "自动修炼已开启");
-                                DiaLog.Log("自动修炼已开启");
+                                WorkTask.AutoTrain(session, config);
                             }
                         }
                         catch (Exception ex)
@@ -243,50 +192,7 @@ try
                             else
                             {
                                 config.Setting.AutoFishing = true;
-                                Thread autoFishing = new(async () => {
-                                    DateTime startTime = DateTime.Now;
-                                    while (config.Setting.AutoFishing)
-                                    {
-                                        if (config.BackpackData.FishingRod.durable == 0)
-                                            config.BackpackData.FishingRod.name = string.Empty;
-
-                                        if (config.BackpackData.FishingRod.name == string.Empty || config.BackpackData.FishingRod.durable == 0)
-                                        {
-                                            if (config.AccountData.Money >= 100000)
-                                            {
-                                                DiaLog.Log("未装备钓竿 购买青环木钓竿*1");
-                                                await session.SendGroupMessageAsync(groupId, "购买青环木钓竿");
-                                                await session.SendGroupMessageAsync(groupId, "装备青环木钓竿");
-                                                config.BackpackData.FishingRod.name = "青环木钓竿";
-                                                config.BackpackData.FishingRod.durable = 30;
-                                            }
-                                            else if (config.AccountData.Money >= 50000)
-                                            {
-                                                DiaLog.Log("未装备钓竿 购买白蜡木钓竿*1");
-                                                await session.SendGroupMessageAsync(groupId, "购买白蜡木钓竿");
-                                                await session.SendGroupMessageAsync(groupId, "装备白蜡木钓竿");
-                                                config.BackpackData.FishingRod.name = "白蜡木钓竿";
-                                                config.BackpackData.FishingRod.durable = 30;
-                                            }
-                                            else
-                                            {
-                                                DiaLog.Log("没有足够的钱购买钓竿 休息30分钟");
-                                                await session.SendGroupMessageAsync(groupId, "没有足够的钱购买钓竿 休息30分钟");
-                                                Thread.Sleep(ConfigDatas.Timeout.workSleepTime);
-                                            }
-                                        }
-                                        else
-                                        {
-                                            await session.SendGroupMessageAsync(groupId, "钓鱼");
-                                            Thread.Sleep(ConfigDatas.Timeout.fishingSleepTime);
-                                        }
-                                    }
-                                    await session.SendGroupMessageAsync(groupId, "自动钓鱼已关闭");
-                                    DiaLog.Log($"自动钓鱼线程结束 线程开始时间: [{startTime}]");
-                                });
-                                autoFishing.Start();
-                                await session.SendGroupMessageAsync(groupId, "自动钓鱼已开启");
-                                DiaLog.Log("自动钓鱼已开启");
+                                WorkTask.AutoFishing(session, config);
                             }
                         }
                         catch (Exception ex)
@@ -314,8 +220,8 @@ try
                             else
                             {
                                 double progress = config.AccountData.Money / 12000.00d * 100;
-                                await session.SendGroupMessageAsync(groupId, $"积分不足 ({config.AccountData.Money}/12000) [{Math.Round(progress, 2)}%]");
-                                DiaLog.Log("积分不足，无法收集");
+                                //await session.SendGroupMessageAsync(groupId, $"积分不足，无法收集 ({config.AccountData.Money}/12000) [{Math.Round(progress, 2)}%]");
+                                DiaLog.Log($"积分不足，无法收集 ({config.AccountData.Money}/12000) [{Math.Round(progress, 2)}%]");
                             }
                         }
                         catch (Exception ex)
@@ -324,7 +230,8 @@ try
                         }
                         break;
                     case "#状态":
-                        await session.SendGroupMessageAsync(groupId, @$"当前状态:
+                        #region
+                        /*await session.SendGroupMessageAsync(groupId, @$"当前状态:
 自动打工: {config.Setting.AutoWork}
 自动探险: {config.Setting.AutoExplore}
 自动修炼: {config.Setting.AutoTrain}
@@ -337,10 +244,37 @@ try
 宠物经验: {config.PetData.Experience}
 宠物等级: {config.PetData.Grade}
 装备钓鱼竿: [{config.BackpackData.FishingRod.name ?? "未装备"}] 剩余使用次数: {config.BackpackData.FishingRod.durable}
+");*/
+                        #endregion
+                        DiaLog.Info(@$"当前状态:
+自动打工: {config.Setting.AutoWork}
+自动探险: {config.Setting.AutoExplore}
+自动修炼: {config.Setting.AutoTrain}
+自动钓鱼: {config.Setting.AutoFishing}
+上次签到时间: {config.SignData.SignTime}
+积分: {config.AccountData.Money}
+宠物心情: {config.PetData.Mood}
+宠物精力: {config.PetData.Energy}
+宠物血量: {config.PetData.BloodVolume}
+宠物经验: {config.PetData.Experience}
+宠物等级: {config.PetData.Grade}
+装备钓鱼竿: [{config.BackpackData.FishingRod.name}] 剩余使用次数: {config.BackpackData.FishingRod.durable}
 ");
                         break;
                     case "#帮助":
-                        await session.SendGroupMessageAsync(groupId, @"命令   [参数]  作用
+                        #region
+                        /*await session.SendGroupMessageAsync(groupId, @"命令   [参数]  作用
+#打工 自动打工
+#探险 自动探险
+#修炼 自动修炼
+#钓鱼 自动钓鱼
+#收集 收集积分
+#状态 查看状态
+#执行 [命令]  执行命令
+#设置 [变量名 值] 设置变量
+#帮助 获得帮助");*/
+                        #endregion
+                        DiaLog.Info(@"命令   [参数]  作用
 #打工 自动打工
 #探险 自动探险
 #修炼 自动修炼
@@ -447,6 +381,31 @@ try
             DiaLog.Error($"设置变量时出错: {ex}");
         }
     });
+
+    Thread autoEnergy = new(() =>
+    {
+        while (true)
+        {
+            if (config.PetData.Energy > 100)
+                config.PetData.Energy = 100;
+
+            while (config.PetData.Energy < 100)
+            {
+                Thread.Sleep(10000);
+                config.PetData.Energy++;
+            }
+            Thread.Sleep(1000);
+        }
+    });
+    autoEnergy.Start();
+
+    Thread autoSave = new(() =>
+    {
+        Thread.Sleep(300000);
+        Config.SaveConfig(config);
+        DiaLog.Info("配置已自动保存");
+    });
+    autoSave.Start();
 
     session.Build();
     Thread.Sleep(-1);
