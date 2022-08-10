@@ -2,11 +2,18 @@
 
 class Data
 {
+    public Robot Robot = new();
     public Setting Setting = new();
     public SignData SignData = new();
     public AccountData AccountData = new();
     public PetData PetData = new();
     public BackpackData BackpackData = new();
+}
+public class Robot
+{
+    public string WebSocketAddress = "ws://127.0.0.1:6700";
+    public string HttpAddress = "http://127.0.0.1:5700";
+    public string BotName = "千璃AwA喵";
 }
 public class Setting
 {

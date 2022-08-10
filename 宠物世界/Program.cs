@@ -7,16 +7,6 @@ using System.Text.RegularExpressions;
 
 try
 {
-    Session session = new("ws://127.0.0.1:6700", "http://127.0.0.1:5700");
-    const int groupId = 522126928;
-    //const int groupId = 295322097;
-    const uint master = 3251242073;
-    const string botName = "千璃AwA喵";
-    const uint gameBotQQ = 3409297243;
-    //const uint gameBotQQ = 2794446833;
-
-#pragma warning disable CS1998 // 异步方法缺少 "await" 运算符，将以同步方式运行
-
     Data? config;
 
     config = Config.ReadConfig();
@@ -27,6 +17,15 @@ try
         Console.ReadKey();
         Environment.Exit(-1);
     }
+
+    Session session = new(config.Robot.WebSocketAddress, config.Robot.HttpAddress);
+    const int groupId = 522126928;
+    //const int groupId = 295322097;
+    const uint master = 3251242073;
+    const uint gameBotQQ = 3409297243;
+    //const uint gameBotQQ = 2794446833;
+
+#pragma warning disable CS1998 // 异步方法缺少 "await" 运算符，将以同步方式运行
 
     //当WebSocket的连接状态发生改变时
     session.UseWebSocketConnect(async (isConnect) =>
@@ -86,7 +85,7 @@ try
                 var gradeStr = Regex.Match(message, @"等级提升.+?(?<num>-?\d+)").Groups["num"].Value;
                 var moneyStr = Regex.Match(message, @"获得积分.+?(?<num>-?\d+)").Groups["num"].Value;
 
-                if (name != string.Empty && name == botName)
+                if (name != string.Empty && name == config.Robot.BotName)
                 {
                     if (message.IndexOf("心情不好了") > 0)
                     {
@@ -214,7 +213,7 @@ try
                                 }
 
                                 await session.SendGroupMessageAsync(groupId, $"购买一万积分卡*{buyCount}");
-                                await session.SendGroupMessageAsync(groupId, "转让物品" + $"一万积分卡*{buyCount}-" + new AtChunk(master));
+                                await session.SendGroupMessageAsync(groupId, $"转让一万积分卡*{buyCount}-" + new AtChunk(master));
                                 DiaLog.Log($"收集完毕，花费了{buyCount * 12000}积分购买了一万积分卡*{buyCount}");
                             }
                             else
@@ -303,8 +302,8 @@ try
 
                 if (command == string.Empty)
                 {
-                    await session.SendGroupMessageAsync(v.GroupId, $"没有指定参数1");
-                    DiaLog.Log("执行命令失败: 没有指定参数");
+                    //await session.SendGroupMessageAsync(v.GroupId, $"没有指定参数1");
+                    DiaLog.Log("执行命令失败: 没有指定参数1");
                 }
                 else
                 {
@@ -331,8 +330,8 @@ try
 
                 if (key == string.Empty || value == string.Empty)
                 {
-                    await session.SendGroupMessageAsync(v.GroupId, $"没有指定参数 参数1: [{key}] 参数2: [{value}]");
-                    DiaLog.Log("执行命令失败: 没有指定参数1 参数2");
+                    //await session.SendGroupMessageAsync(v.GroupId, $"没有指定参数 参数1: [{key}] 参数2: [{value}]");
+                    DiaLog.Log($"执行命令失败: 没有指定参数 参数1: [{key}] 参数2: [{value}]");
                 }
                 else
                 {
@@ -340,36 +339,42 @@ try
                     {
                         case "积分" or nameof(Data.AccountData.Money):
                             config.AccountData.Money = long.Parse(value);
-                            await session.SendGroupMessageAsync(groupId, $"设置了变量: {key}={value}");
+                            //await session.SendGroupMessageAsync(groupId, $"设置了变量: {key}={value}");
                             DiaLog.Log($"设置了变量: {key}={value}");
                             break;
                         case "心情" or nameof(Data.PetData.Mood):
                             config.PetData.Mood = int.Parse(value);
-                            await session.SendGroupMessageAsync(groupId, $"设置了变量: {key}={value}");
+                            //await session.SendGroupMessageAsync(groupId, $"设置了变量: {key}={value}");
                             DiaLog.Log($"设置了变量: {key}={value}");
                             break;
                         case "精力" or nameof(Data.PetData.Energy):
                             config.PetData.Energy = int.Parse(value);
-                            await session.SendGroupMessageAsync(groupId, $"设置了变量: {key}={value}");
+                            //await session.SendGroupMessageAsync(groupId, $"设置了变量: {key}={value}");
                             DiaLog.Log($"设置了变量: {key}={value}");
                             break;
                         case "血量" or nameof(Data.PetData.BloodVolume):
                             config.PetData.BloodVolume = int.Parse(value);
-                            await session.SendGroupMessageAsync(groupId, $"设置了变量: {key}={value}");
+                            //await session.SendGroupMessageAsync(groupId, $"设置了变量: {key}={value}");
                             DiaLog.Log($"设置了变量: {key}={value}");
                             break;
                         case "经验" or nameof(Data.PetData.Experience):
                             config.PetData.Experience = int.Parse(value);
-                            await session.SendGroupMessageAsync(groupId, $"设置了变量: {key}={value}");
+                            //await session.SendGroupMessageAsync(groupId, $"设置了变量: {key}={value}");
                             DiaLog.Log($"设置了变量: {key}={value}");
                             break;
                         case "等级" or nameof(Data.PetData.Grade):
                             config.PetData.Grade = int.Parse(value);
-                            await session.SendGroupMessageAsync(groupId, $"设置了变量: {key}={value}");
+                            //await session.SendGroupMessageAsync(groupId, $"设置了变量: {key}={value}");
                             DiaLog.Log($"设置了变量: {key}={value}");
                             break;
+                        case "鱼竿" or nameof(Data.BackpackData.FishingRod):
+                            config.BackpackData.FishingRod.name = key;
+                            config.BackpackData.FishingRod.durable = int.Parse(value);
+                            await session.SendGroupMessageAsync(groupId, $"装备{key}");
+                            DiaLog.Log($"装备了鱼竿: [{key}] 剩余耐久: {value}");
+                            break;
                         default:
-                            await session.SendGroupMessageAsync(groupId, $"未能找到变量: {key}={value}");
+                            //await session.SendGroupMessageAsync(groupId, $"未能找到变量: {key}={value}");
                             DiaLog.Log($"未能找到变量: {key}={value}");
                             break;
                     }

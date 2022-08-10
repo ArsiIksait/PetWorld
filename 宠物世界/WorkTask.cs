@@ -93,11 +93,20 @@ class WorkTask
     {
         Thread autoTrain = new(async () => {
             DateTime startTime = DateTime.Now;
+            int trainCount = 0;
             while (config.Setting.AutoTrain)
             {
                 if (config.PetData.Energy >= 10)
                 {
                     await session.SendGroupMessageAsync(groupId, "修炼");
+                    trainCount++;
+
+                    if (trainCount >= 10)
+                    {
+                        await session.SendGroupMessageAsync(groupId, "宠物升级");
+                        trainCount = 0;
+                    }
+
                     config.PetData.Energy -= 10;
                     Thread.Sleep(ConfigDatas.Timeout.sleepTime);
                 }
