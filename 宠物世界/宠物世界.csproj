@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EleCho.Json" Version="1.1.1" />
+    <PackageReference Include="EleCho.Json" Version="1.2.0" />
     <PackageReference Include="IlyfairyLib.GoCqHttpSdk" Version="1.1.5" />
   </ItemGroup>
 

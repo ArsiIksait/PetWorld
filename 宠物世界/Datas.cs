@@ -12,6 +12,7 @@ public class Setting
 {
     bool autoWork;
     bool autoExplore;
+    bool autoTrain;
     public bool AutoWork
     {
         get
@@ -22,7 +23,10 @@ public class Setting
         {
             autoWork = value;
             if (value == true)
+            {
                 AutoExplore = false;
+                AutoTrain = false;
+            }
         }
     }
     public bool AutoExplore
@@ -35,15 +39,33 @@ public class Setting
         {
             autoExplore = value;
             if (value == true)
+            {
                 AutoWork = false;
+                AutoTrain = false;
+            }
         }
     }
-    public bool AutoFish;
+    public bool AutoTrain
+    {
+        get
+        {
+            return autoTrain;
+        }
+        set
+        {
+            autoTrain = value;
+            if (value == true)
+            {
+                AutoWork = false;
+                AutoExplore = false;
+            }
+        }
+    }
+    public bool AutoFishing;
 }
 
 public class SignData
 {
-    public bool Sign;
     public DateTime SignTime;
 }
 
@@ -69,5 +91,7 @@ public class BackpackData
 
 class Timeout
 {
-    public static int sleepTime = 1200000;
+    public static int sleepTime = 120000;
+    public static int workSleepTime = 180000;
+    public static int fishingSleepTime = 60000;
 }

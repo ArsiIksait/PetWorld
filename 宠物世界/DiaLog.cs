@@ -1,7 +1,7 @@
 ﻿class DiaLog
 {
     public static bool saveLog = true;
-    static readonly string logFile = "ProgramRuntimeLog.log";
+    static readonly string logFile = "宠物世界.log";
 
     public static void Log(string text)
     {
