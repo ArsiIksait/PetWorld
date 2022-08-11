@@ -95,18 +95,45 @@ class WorkTask
         Thread autoTrain = new(async () => {
             DateTime startTime = DateTime.Now;
             int trainCount = 0;
+            int learnCount = 0;
+            bool train = true;
+            bool learn = false;
+
             while (config.Setting.AutoTrain)
             {
                 if (config.PetData.Energy >= 10)
                 {
-                    await session.SendGroupMessageAsync(groupId, "修炼");
-                    trainCount++;
-
-                    if (trainCount >= 10)
+                    if (train)
                     {
-                        await session.SendGroupMessageAsync(groupId, "宠物升级");
-                        trainCount = 0;
+                        await session.SendGroupMessageAsync(groupId, "修炼");
+                        trainCount++;
+
+                        if (trainCount >= 5)
+                        {
+                            await session.SendGroupMessageAsync(groupId, "宠物升级");
+                            trainCount = 0;
+                        }
+
+                        train = false;
+                        learn = true;
                     }
+
+                    if (learn)
+                    {
+                        if (learnCount == 0)
+                        {
+                            await session.SendGroupMessageAsync(groupId, "学习");
+                            learnCount++;
+                        }
+                        else
+                        {
+                            await session.SendGroupMessageAsync(groupId, "洗随");
+                            learnCount = 0;
+                        }
+
+                        train = true;
+                        learn = false;
+                    }    
 
                     config.PetData.Energy -= 10;
                     Thread.Sleep(ConfigDatas.Timeout.sleepTime);
@@ -142,37 +169,39 @@ class WorkTask
             DateTime startTime = DateTime.Now;
             while (config.Setting.AutoFishing)
             {
-                if (config.BackpackData.FishingRod.durable == 0)
-                    config.BackpackData.FishingRod.name = string.Empty;
-
                 if (config.BackpackData.FishingRod.name == string.Empty || config.BackpackData.FishingRod.durable == 0)
                 {
                     if (config.AccountData.Money >= 100000)
                     {
-                        DiaLog.Log("未装备钓竿 购买青环木钓竿*1");
-                        await session.SendGroupMessageAsync(groupId, "购买青环木钓竿");
-                        await session.SendGroupMessageAsync(groupId, "装备青环木钓竿");
-                        config.BackpackData.FishingRod.name = "青环木钓竿";
+                        DiaLog.Log("未装备鱼竿 购买青环木鱼竿*1");
+                        await session.SendGroupMessageAsync(groupId, "购买青环木鱼竿");
+                        await session.SendGroupMessageAsync(groupId, "装备青环木鱼竿");
+                        config.BackpackData.FishingRod.name = "青环木鱼竿";
                         config.BackpackData.FishingRod.durable = 30;
                     }
                     else if (config.AccountData.Money >= 50000)
                     {
-                        DiaLog.Log("未装备钓竿 购买白蜡木钓竿*1");
-                        await session.SendGroupMessageAsync(groupId, "购买白蜡木钓竿");
-                        await session.SendGroupMessageAsync(groupId, "装备白蜡木钓竿");
-                        config.BackpackData.FishingRod.name = "白蜡木钓竿";
+                        DiaLog.Log("未装备鱼竿 购买白蜡木鱼竿*1");
+                        await session.SendGroupMessageAsync(groupId, "购买白蜡木鱼竿");
+                        await session.SendGroupMessageAsync(groupId, "装备白蜡木鱼竿");
+                        config.BackpackData.FishingRod.name = "白蜡木鱼竿";
                         config.BackpackData.FishingRod.durable = 30;
                     }
                     else
                     {
-                        DiaLog.Log("没有足够的钱购买钓竿 休息10分钟");
-                        //await session.SendGroupMessageAsync(groupId, "没有足够的钱购买钓竿 休息10分钟");
+                        DiaLog.Log("没有足够的钱购买鱼竿 休息10分钟");
+                        //await session.SendGroupMessageAsync(groupId, "没有足够的钱购买鱼竿 休息10分钟");
                         Thread.Sleep(ConfigDatas.Timeout.workSleepTime);
                     }
                 }
                 else
                 {
                     await session.SendGroupMessageAsync(groupId, "钓鱼");
+                    config.BackpackData.FishingRod.durable--;
+
+                    if (config.BackpackData.FishingRod.durable == 0)
+                        config.BackpackData.FishingRod.name = string.Empty;
+
                     Thread.Sleep(ConfigDatas.Timeout.fishingSleepTime);
                 }
             }
@@ -182,6 +211,27 @@ class WorkTask
         autoFishing.Start();
         //await session.SendGroupMessageAsync(groupId, "自动钓鱼已开启");
         DiaLog.Log("自动钓鱼已开启");
+    }
+    public static void AutoSign(Session session, Data config)
+    {
+        Thread autoSign = new(async () =>
+        {
+            while (true)
+            {
+                if (DateTime.Now >= config.SignData.SignTime)
+                {
+                    await session.SendGroupMessageAsync(groupId, "签到");
+                    config.SignData.SignTime = DateTime.Now;
+                }
+                int h = config.SignData.SignTime.Hour;
+
+                if (h == 0)
+                    h = 24;
+
+                Thread.Sleep((24 - h) * 3600000);
+            }
+        });
+        autoSign.Start();
     }
     public static void AutoEnergy(Data config)
     {

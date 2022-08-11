@@ -367,12 +367,6 @@ try
                             //await session.SendGroupMessageAsync(groupId, $"设置了变量: {key}={value}");
                             DiaLog.Log($"设置了变量: {key}={value}");
                             break;
-                        case "鱼竿" or nameof(Data.BackpackData.FishingRod):
-                            config.BackpackData.FishingRod.name = key;
-                            config.BackpackData.FishingRod.durable = int.Parse(value);
-                            await session.SendGroupMessageAsync(groupId, $"装备{key}");
-                            DiaLog.Log($"装备了鱼竿: [{key}] 剩余耐久: {value}");
-                            break;
                         default:
                             //await session.SendGroupMessageAsync(groupId, $"未能找到变量: {key}={value}");
                             DiaLog.Log($"未能找到变量: {key}={value}");
@@ -388,6 +382,7 @@ try
     });
 
     WorkTask.AutoSave(config);
+    WorkTask.AutoSign(session, config);
     WorkTask.AutoEnergy(config);
 
     session.Build();
