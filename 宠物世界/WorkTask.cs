@@ -9,7 +9,8 @@ class WorkTask
 
     public static void AutoWork(Session session, Data config)
     {
-        Thread autoWork = new(async () => {
+        Thread autoWork = new(async () =>
+        {
             DateTime startTime = DateTime.Now;
             while (config.Setting.AutoWork)
             {
@@ -46,7 +47,8 @@ class WorkTask
     }
     public static void AutoExplore(Session session, Data config)
     {
-        Thread autoExplore = new(async () => {
+        Thread autoExplore = new(async () =>
+        {
             DateTime startTime = DateTime.Now;
             while (config.Setting.AutoExplore)
             {
@@ -92,7 +94,8 @@ class WorkTask
     }
     public static void AutoTrain(Session session, Data config)
     {
-        Thread autoTrain = new(async () => {
+        Thread autoTrain = new(async () =>
+        {
             DateTime startTime = DateTime.Now;
             int trainCount = 0;
             int learnCount = 0;
@@ -117,8 +120,7 @@ class WorkTask
                         train = false;
                         learn = true;
                     }
-
-                    if (learn)
+                    else if (learn)
                     {
                         if (learnCount == 0)
                         {
@@ -127,13 +129,13 @@ class WorkTask
                         }
                         else
                         {
-                            await session.SendGroupMessageAsync(groupId, "洗随");
+                            await session.SendGroupMessageAsync(groupId, "洗髓");
                             learnCount = 0;
                         }
 
                         train = true;
                         learn = false;
-                    }    
+                    }
 
                     config.PetData.Energy -= 10;
                     Thread.Sleep(ConfigDatas.Timeout.sleepTime);
@@ -165,7 +167,8 @@ class WorkTask
     }
     public static void AutoFishing(Session session, Data config)
     {
-        Thread autoFishing = new(async () => {
+        Thread autoFishing = new(async () =>
+        {
             DateTime startTime = DateTime.Now;
             while (config.Setting.AutoFishing)
             {
@@ -218,7 +221,7 @@ class WorkTask
         {
             while (true)
             {
-                if (DateTime.Now >= config.SignData.SignTime)
+                if (DateTime.Now.Day > config.SignData.SignTime.Day)
                 {
                     await session.SendGroupMessageAsync(groupId, "签到");
                     config.SignData.SignTime = DateTime.Now;
@@ -233,12 +236,38 @@ class WorkTask
         });
         autoSign.Start();
     }
+    public static void AutoSignBattleList(Session session, Data config)
+    {
+        Thread autoSignBattleList = new(async () =>
+        {
+            while (true)
+            {
+                if (DateTime.Now.Day > config.SignData.SignBattleListTime.Day)
+                {
+                    if (config.Setting.AutoSignBattleList)
+                    {
+                        await session.SendGroupMessageAsync(groupId, "领战榜奖励");
+                    }
+
+                    config.SignData.SignBattleListTime = DateTime.Now;
+                }
+
+                int h = config.SignData.SignBattleListTime.Hour;
+
+                if (h == 0)
+                    h = 24;
+
+                Thread.Sleep((24 - h) * 3600000);
+            }
+        });
+        autoSignBattleList.Start();
+    }
     public static void AutoEnergy(Data config)
     {
         Thread autoEnergy = new(() =>
         {
             while (true)
-{
+            {
                 if (config.PetData.Energy > 100)
                     config.PetData.Energy = 100;
 
@@ -256,7 +285,7 @@ class WorkTask
     {
         Thread autoSave = new(() =>
         {
-            while(true)
+            while (true)
             {
                 Thread.Sleep(300000);
                 Config.SaveConfig(config);

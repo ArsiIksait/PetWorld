@@ -69,11 +69,13 @@ public class Setting
         }
     }
     public bool AutoFishing;
+    public bool AutoSignBattleList;
 }
 
 public class SignData
 {
     public DateTime SignTime;
+    public DateTime SignBattleListTime;
 }
 
 public class AccountData

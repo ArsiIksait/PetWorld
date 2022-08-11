@@ -383,6 +383,7 @@ try
 
     WorkTask.AutoSave(config);
     WorkTask.AutoSign(session, config);
+    WorkTask.AutoSignBattleList(session, config);
     WorkTask.AutoEnergy(config);
 
     session.Build();

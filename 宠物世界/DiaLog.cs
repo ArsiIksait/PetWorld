@@ -26,7 +26,7 @@
         Console.WriteLine(text);
         SaveLog(text);
     }
-    
+
     public static void Error(string text)
     {
         Console.ForegroundColor = ConsoleColor.Red;
