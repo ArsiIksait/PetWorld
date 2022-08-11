@@ -1,4 +1,5 @@
 ﻿using ConfigDatas;
+using ConfigManage;
 using IlyfairyLib.GoCqHttpSdk;
 using IlyfairyLib.GoCqHttpSdk.Api;
 
@@ -181,5 +182,37 @@ class WorkTask
         autoFishing.Start();
         //await session.SendGroupMessageAsync(groupId, "自动钓鱼已开启");
         DiaLog.Log("自动钓鱼已开启");
+    }
+    public static void AutoEnergy(Data config)
+    {
+        Thread autoEnergy = new(() =>
+        {
+            while (true)
+{
+                if (config.PetData.Energy > 100)
+                    config.PetData.Energy = 100;
+
+                while (config.PetData.Energy < 100)
+                {
+                    Thread.Sleep(10000);
+                    config.PetData.Energy++;
+                }
+                Thread.Sleep(1000);
+            }
+        });
+        autoEnergy.Start();
+    }
+    public static void AutoSave(Data config)
+    {
+        Thread autoSave = new(() =>
+        {
+            while(true)
+            {
+                Thread.Sleep(300000);
+                Config.SaveConfig(config);
+                DiaLog.Info("配置已自动保存");
+            }
+        });
+        autoSave.Start();
     }
 }

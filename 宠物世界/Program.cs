@@ -387,30 +387,8 @@ try
         }
     });
 
-    Thread autoEnergy = new(() =>
-    {
-        while (true)
-        {
-            if (config.PetData.Energy > 100)
-                config.PetData.Energy = 100;
-
-            while (config.PetData.Energy < 100)
-            {
-                Thread.Sleep(10000);
-                config.PetData.Energy++;
-            }
-            Thread.Sleep(1000);
-        }
-    });
-    autoEnergy.Start();
-
-    Thread autoSave = new(() =>
-    {
-        Thread.Sleep(300000);
-        Config.SaveConfig(config);
-        DiaLog.Info("配置已自动保存");
-    });
-    autoSave.Start();
+    WorkTask.AutoSave(config);
+    WorkTask.AutoEnergy(config);
 
     session.Build();
     Thread.Sleep(-1);
