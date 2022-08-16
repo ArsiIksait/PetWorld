@@ -240,15 +240,11 @@ class WorkTask
     {
         Thread autoSignBattleList = new(async () =>
         {
-            while (true)
+            while (config.Setting.AutoSignBattleList)
             {
                 if (DateTime.Now.Day > config.SignData.SignBattleListTime.Day)
                 {
-                    if (config.Setting.AutoSignBattleList)
-                    {
-                        await session.SendGroupMessageAsync(groupId, "领战榜奖励");
-                    }
-
+                    await session.SendGroupMessageAsync(groupId, "领战榜奖励");
                     config.SignData.SignBattleListTime = DateTime.Now;
                 }
 
