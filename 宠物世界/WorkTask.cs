@@ -224,6 +224,7 @@ class WorkTask
                 if (DateTime.Now.Day > config.SignData.SignTime.Day)
                 {
                     await session.SendGroupMessageAsync(groupId, "签到");
+                    DiaLog.Info("已自动签到");
                     config.SignData.SignTime = DateTime.Now;
                 }
                 int h = config.SignData.SignTime.Hour;
@@ -235,16 +236,19 @@ class WorkTask
             }
         });
         autoSign.Start();
+        DiaLog.Log("自动签到已开启");
     }
     public static void AutoSignBattleList(Session session, Data config)
     {
         Thread autoSignBattleList = new(async () =>
         {
+            DateTime startTime = DateTime.Now;
             while (config.Setting.AutoSignBattleList)
             {
                 if (DateTime.Now.Day > config.SignData.SignBattleListTime.Day)
                 {
                     await session.SendGroupMessageAsync(groupId, "领战榜奖励");
+                    DiaLog.Info("已自动领取每日宠物战榜奖励");
                     config.SignData.SignBattleListTime = DateTime.Now;
                 }
 
@@ -255,8 +259,11 @@ class WorkTask
 
                 Thread.Sleep((24 - h) * 3600000);
             }
+            DiaLog.Log("自动领取宠物战榜奖励已关闭");
+            DiaLog.Log($"自动领取宠物战榜奖励线程结束 线程开始时间: [{startTime}]");
         });
         autoSignBattleList.Start();
+        DiaLog.Log("自动领取宠物战榜奖励已开启");
     }
     public static void AutoEnergy(Data config)
     {
